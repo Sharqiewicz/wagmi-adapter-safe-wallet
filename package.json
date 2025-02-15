@@ -1,0 +1,51 @@
+{
+	"name": "wagmi-eip-4337",
+	"version": "1.0.0",
+	"description": "A library for interacting with EIP-4337 transactions using Wagmi",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "swc src -d dist --strip-leading-paths && tsc --emitDeclarationOnly --outDir dist"
+	},
+	"dependencies": {
+		"@safe-global/api-kit": "^2.5.9",
+		"@wagmi/core": "^2.16.4",
+		"viem": "^2.23.2"
+	},
+	"packageManager": "pnpm@9.13.2+sha512.88c9c3864450350e65a33587ab801acf946d7c814ed1134da4a924f6df5a2120fd36b46aab68f7cd1d413149112d53c7db3a4136624cfd00ff1846a0c6cef48a",
+	"devDependencies": {
+		"@swc/cli": "^0.6.0",
+		"@swc/core": "^1.10.16",
+		"typescript": "^5.7.3"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/YOUR_USERNAME/wagmi-eip-4337"
+	},
+	"keywords": [
+		"wagmi",
+		"eip-4337",
+		"ethereum",
+		"safe-wallet",
+		"account-abstraction",
+		"web3",
+		"viem"
+	],
+	"authors": [
+		{
+			"name": "Kacper Szarkiewicz",
+			"email": "contact@sharqiewicz.com",
+			"url": "https://sharqiewicz.com"
+		}
+	],
+	"license": "GPL-3.0-only"
+}
