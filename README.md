@@ -12,6 +12,8 @@ The issue: When using **Safe Wallet**, the initial transaction hash returned is 
 
 This creates challenges when tracking transaction status using standard wagmi/viem hooks, as they look for the initial `safeTxHash` on-chain which doesn't exist.
 
+wagmi doesn't account for safe's safeTxHash
+
 ---
 A utility library for handling Account Abstraction wallet transactions in wagmi, with initial support for **Safe Wallet**. Provides transaction hash resolution and confirmation tracking for Smart Contract Wallets where transaction hashes may not directly correspond to on-chain transactions.
 

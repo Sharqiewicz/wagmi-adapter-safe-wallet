@@ -1,6 +1,6 @@
 {
 	"name": "wagmi-eip-4337",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "A library for interacting with EIP-4337 transactions using Wagmi",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
