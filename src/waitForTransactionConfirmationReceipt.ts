@@ -32,24 +32,27 @@ async function pollSafeTransaction(hash: Hash, wagmiConfig: Config, delay = 5000
 
 
 /**
- * Detects if a transaction is a Safe Wallet transaction and waits for it to be confirmed by the Safe Wallet API and the blockchain.
+ * Waits for a transaction to be confirmed, handling both regular and Safe Wallet transactions.
+ * For Safe Wallet transactions, it monitors both the Safe API for signatures and the blockchain for confirmation.
+ * For regular transactions, it simply waits for blockchain confirmation.
  *
- * @param transactionHash - The hash of the transaction to wait for.
- * @returns The confirmed transaction hash.
+ * @param hash - The transaction hash to monitor
+ * @param wagmiConfig - The Wagmi configuration object
+ * @returns A promise that resolves to the final transaction hash
  */
-export async function waitForTransactionConfirmationReceipt(transactionHash: Hash, wagmiConfig: Config): Promise<Hash> {
-  const isSafeWalletTransaction = await isTransactionHashSafeWallet(transactionHash, wagmiConfig);
+export async function waitForTransactionConfirmationReceipt(hash: Hash, wagmiConfig: Config): Promise<Hash> {
+  const isSafeWalletTransaction = await isTransactionHashSafeWallet(hash, wagmiConfig);
 
   if (isSafeWalletTransaction) {
-    // Wait for the transaction to be confirmed by the Safe Wallet API
-    const safeTransaction = await pollSafeTransaction(transactionHash, wagmiConfig);
-    const confirmedHash = safeTransaction.transactionHash as Hash;
+    // Wait for all required signatures via Safe API
+    const safeTransaction = await pollSafeTransaction(hash, wagmiConfig);
+    const transactionHash = safeTransaction.transactionHash as Hash;
 
-    // Wait for the transaction to be confirmed by the blockchain
-    await waitForTransactionReceipt(wagmiConfig, { hash: confirmedHash });
-    return confirmedHash;
+    // Wait for on-chain confirmation
+    await waitForTransactionReceipt(wagmiConfig, { hash: transactionHash });
+    return transactionHash;
   }
 
-  await waitForTransactionReceipt(wagmiConfig, { hash: transactionHash });
-  return transactionHash;
+  await waitForTransactionReceipt(wagmiConfig, { hash });
+  return hash;
 }
