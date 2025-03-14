@@ -7,23 +7,61 @@ import type { Config } from '@wagmi/core';
 import type { Hash } from 'viem';
 
 /**
- * Checks if a transaction hash exists in the Safe Wallet API.
+ * Checks if a transaction exists on the blockchain.
  *
- * @param hash - The transaction hash to check
- * @param wagmiConfig - The Wagmi configuration object
+ * @param hash - Transaction hash to check
+ * @param wagmiConfig - Wagmi configuration
+ * @returns true if transaction exists on-chain, false otherwise
+ */
+async function isTransactionOnChain(hash: Hash, wagmiConfig: Config): Promise<boolean> {
+  try {
+    await getTransaction(wagmiConfig, { hash });
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Checks if a transaction exists in the Safe Wallet API.
+ *
+ * @param hash - Transaction hash to check
+ * @param wagmiConfig - Wagmi configuration
  * @returns The Safe transaction data if found
  */
-const checkSafeTransaction = async (hash: Hash, wagmiConfig: Config) => {
-  // Transaction not found on chain, check if it's a Safe Wallet transaction
+async function checkSafeWalletTransaction(hash: Hash, wagmiConfig: Config) {
   const chainId = getChainId(wagmiConfig);
   const safeApiKit = new SafeApiKit({
     chainId: BigInt(chainId),
   });
 
   const transaction = await safeApiKit.getTransaction(hash);
-
   return transaction;
-};
+}
+
+/**
+ * Checks if a transaction exists in the Safe Wallet API with retry logic.
+ *
+ * @param hash - Transaction hash to check
+ * @param wagmiConfig - Wagmi configuration
+ * @returns true if transaction exists in Safe API, false otherwise
+ */
+async function isTransactionInSafeWalletApi(hash: Hash, wagmiConfig: Config): Promise<boolean> {
+  const queryClient = new QueryClient();
+
+  try {
+    const result = await queryClient.fetchQuery({
+      queryKey: ['safeTransaction', 'check', hash],
+      queryFn: () => checkSafeWalletTransaction(hash, wagmiConfig),
+      retry: 14,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
+    });
+
+    return !!result;
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Determines if a transaction hash belongs to a Safe Wallet transaction or a regular Ethereum transaction.
@@ -49,36 +87,12 @@ const checkSafeTransaction = async (hash: Hash, wagmiConfig: Config) => {
  * @param wagmiConfig - The Wagmi configuration object
  * @returns true if this is a Safe Wallet transaction, false if it's a regular Ethereum transaction
  */
-export async function isTransactionHashSafeWallet(hash: Hash, wagmiConfig: Config) {
-  try {
-    // Try to find the transaction on the blockchain
-    // If found, it's a regular Ethereum transaction
-    // If not found it throws an error, it might be a Safe Wallet transaction that hasn't been executed yet
-    await getTransaction(wagmiConfig, { hash });
+export async function isTransactionHashSafeWallet(hash: Hash, wagmiConfig: Config): Promise<boolean> {
+  const onChain = await isTransactionOnChain(hash, wagmiConfig);
 
-    // Transaction found on chain, so it's a regular Ethereum transaction
-    // Note: If a transaction isn't found, it could be a Safe transaction or just not indexed by the node yet
+  if (onChain) {
     return false;
-  } catch (error) {
-    try {
-      const queryClient = new QueryClient();
-
-      const result = await queryClient.fetchQuery({
-        queryKey: ['safeTransaction', 'check', hash],
-        queryFn: () => checkSafeTransaction(hash, wagmiConfig),
-        retry: 14,
-        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000),
-      });
-
-      if (result) {
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      // After all retries, if we still can't find it in Safe API,
-      // it's likely not a Safe transaction
-      return false;
-    }
   }
+
+  return await isTransactionInSafeWalletApi(hash, wagmiConfig);
 }
