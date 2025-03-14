@@ -40,7 +40,6 @@ export async function isTransactionHashSafeWallet(hash: Hash, wagmiConfig: Confi
     });
 
     try {
-
       await safeApiKit.getTransaction(hash);
 
       return true;
