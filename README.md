@@ -1,6 +1,6 @@
-# wagmi-eip-4337
+# wagmi-adapter-safe-wallet
 
-[![npm version](https://img.shields.io/npm/v/wagmi-eip-4337.svg)](https://www.npmjs.com/package/wagmi-eip-4337)
+[![npm version](https://img.shields.io/npm/v/wagmi-adapter-safe-wallet.svg)](https://www.npmjs.com/package/wagmi-adapter-safe-wallet)
 
 ---
 
@@ -26,7 +26,7 @@ Features:
 ## Installation
 
 ```bash
-npm i wagmi-eip-4337
+npm i wagmi-adapter-safe-wallet
 ```
 
 ## Usage
@@ -34,7 +34,7 @@ npm i wagmi-eip-4337
 ### Detecting Safe Wallet Transactions
 
 ```ts
-import { isTransactionHashSafeWallet } from 'wagmi-eip-4337';
+import { isTransactionHashSafeWallet } from 'wagmi-adapter-safe-wallet';
 
 const isSafe = await isTransactionHashSafeWallet(hash, wagmiConfig);
 ```
@@ -44,7 +44,7 @@ const isSafe = await isTransactionHashSafeWallet(hash, wagmiConfig);
 instead of **wagmi**'s `waitForTransactionReceipt` you can use `waitForTransactionConfirmationReceipt`
 
 ```ts
-import { waitForTransactionConfirmationReceipt } from 'wagmi-eip-4337';
+import { waitForTransactionConfirmationReceipt } from 'wagmi-adapter-safe-wallet';
 
 const receipt = await waitForTransactionConfirmationReceipt(hash, wagmiConfig);
 ```
