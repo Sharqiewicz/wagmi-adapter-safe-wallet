@@ -1,10 +1,24 @@
 import SafeApiKit from '@safe-global/api-kit';
+import { QueryClient } from '@tanstack/query-core';
 import { waitForTransactionReceipt, getChainId } from '@wagmi/core';
 import type { Config } from '@wagmi/core';
 import type { Hash } from 'viem';
 
 import { isTransactionHashSafeWallet } from './isTransactionHashSafeWallet';
 
+const fetchSafeWalletTransaction = async (hash: Hash, wagmiConfig: Config) => {
+  const chainId = getChainId(wagmiConfig);
+  const safeApiKit = new SafeApiKit({
+    chainId: BigInt(chainId),
+  });
+  const safeTransaction = await safeApiKit.getTransaction(hash);
+
+  if (!safeTransaction.isExecuted) {
+    throw new Error('Transaction not yet executed');
+  }
+
+  return safeTransaction;
+};
 
 /**
  * If the transaction has to be signed by several signers, it may take some time for the transaction to be confirmed.
@@ -14,22 +28,17 @@ import { isTransactionHashSafeWallet } from './isTransactionHashSafeWallet';
  * @param delay - The delay between polls in milliseconds.
  * @returns The confirmed transaction.
  */
-async function pollSafeTransaction(hash: Hash, wagmiConfig: Config, delay = 5000) {
-    const chainId = getChainId(wagmiConfig);
-    const safeApiKit = new SafeApiKit({
-      chainId: BigInt(chainId),
-    });
+async function pollSafeWalletTransaction(hash: Hash, wagmiConfig: Config, delay = 5000) {
+  const queryClient = new QueryClient();
 
-    const safeTransaction = await safeApiKit.getTransaction(hash);
+  const result = await queryClient.fetchQuery({
+    queryKey: ['safeTransaction', hash],
+    queryFn: () => fetchSafeWalletTransaction(hash, wagmiConfig),
+    retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 30000),
+  });
 
-    if (safeTransaction.isExecuted) {
-      return safeTransaction;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return pollSafeTransaction(hash, wagmiConfig, delay);
+  return result;
 }
-
 
 /**
  * Waits for a transaction to be confirmed, handling both regular and Safe Wallet transactions.
@@ -45,7 +54,7 @@ export async function waitForTransactionConfirmationReceipt(hash: Hash, wagmiCon
 
   if (isSafeWalletTransaction) {
     // Wait for all required signatures via Safe API
-    const safeTransaction = await pollSafeTransaction(hash, wagmiConfig);
+    const safeTransaction = await pollSafeWalletTransaction(hash, wagmiConfig);
     const transactionHash = safeTransaction.transactionHash as Hash;
 
     // Wait for on-chain confirmation

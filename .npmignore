@@ -4,3 +4,5 @@ src/
 tsconfig.json
 .gitignore
 .npmignore
+.prettierrc
+.prettierignore

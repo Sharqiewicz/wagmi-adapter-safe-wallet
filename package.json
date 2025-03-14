@@ -18,6 +18,7 @@
 	},
 	"dependencies": {
 		"@safe-global/api-kit": "^2.5.9",
+		"@tanstack/query-core": "^5.68.0",
 		"@wagmi/core": "^2.16.4",
 		"viem": "^2.23.2"
 	},
