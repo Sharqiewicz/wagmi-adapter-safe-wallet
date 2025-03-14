@@ -1,5 +1,7 @@
-import SafeApiKit from '@safe-global/api-kit';
 import { QueryClient } from '@tanstack/query-core';
+
+import SafeApiKit from '@safe-global/api-kit';
+
 import { waitForTransactionReceipt, getChainId } from '@wagmi/core';
 import type { Config } from '@wagmi/core';
 import type { Hash } from 'viem';
@@ -65,16 +67,12 @@ async function pollSafeWalletTransaction(hash: Hash, wagmiConfig: Config, delay 
 export async function waitForTransactionConfirmationReceipt(hash: Hash, wagmiConfig: Config): Promise<Hash> {
   const isSafeWalletTransaction = await isTransactionHashSafeWallet(hash, wagmiConfig);
 
-  if (isSafeWalletTransaction) {
-    // Wait for all required signatures via Safe API
-    const safeTransaction = await pollSafeWalletTransaction(hash, wagmiConfig);
-    const transactionHash = safeTransaction.transactionHash as Hash;
+  // For Safe Wallet transactions, get the actual on-chain transaction hash
+  const finalHash = isSafeWalletTransaction
+    ? ((await pollSafeWalletTransaction(hash, wagmiConfig)).transactionHash as Hash)
+    : hash;
 
-    // Wait for on-chain confirmation
-    await waitForTransactionReceipt(wagmiConfig, { hash: transactionHash });
-    return transactionHash;
-  }
-
-  await waitForTransactionReceipt(wagmiConfig, { hash });
-  return hash;
+  // Wait for on-chain confirmation with the appropriate hash
+  await waitForTransactionReceipt(wagmiConfig, { hash: finalHash });
+  return finalHash;
 }
